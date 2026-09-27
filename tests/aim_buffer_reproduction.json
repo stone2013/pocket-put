@@ -1,0 +1,58 @@
+{
+  "description": "Five consecutive aim-line replacements on hole 1, with simulation time fixed at 0. Count non-white texels in the 1536 x 1536 shadow texture.",
+  "environment": "Chromium 144, SwiftShader, 1000x700 viewport",
+  "before_v1.0": [
+    {
+      "frame": 0,
+      "glError": 0,
+      "nonWhiteShadowPixels": 303584
+    },
+    {
+      "frame": 1,
+      "glError": 1282,
+      "nonWhiteShadowPixels": 0
+    },
+    {
+      "frame": 2,
+      "glError": 1282,
+      "nonWhiteShadowPixels": 0
+    },
+    {
+      "frame": 3,
+      "glError": 1282,
+      "nonWhiteShadowPixels": 0
+    },
+    {
+      "frame": 4,
+      "glError": 1282,
+      "nonWhiteShadowPixels": 0
+    }
+  ],
+  "after_v1.0.1": [
+    {
+      "frame": 0,
+      "glError": 0,
+      "nonWhiteShadowPixels": 303584
+    },
+    {
+      "frame": 1,
+      "glError": 0,
+      "nonWhiteShadowPixels": 303584
+    },
+    {
+      "frame": 2,
+      "glError": 0,
+      "nonWhiteShadowPixels": 303584
+    },
+    {
+      "frame": 3,
+      "glError": 0,
+      "nonWhiteShadowPixels": 303584
+    },
+    {
+      "frame": 4,
+      "glError": 0,
+      "nonWhiteShadowPixels": 303584
+    }
+  ]
+}

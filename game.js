@@ -16,7 +16,7 @@ const LEVELS=[
 const SAVE_KEY='pocket_putt_kenney_v1',PREF_KEY=SAVE_KEY+'_prefs',BEST_KEY=SAVE_KEY+'_bests';
 const safeRead=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))||fallback;}catch{return fallback;}};
 const safeWrite=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value));}catch{}};
-let preferences=safeRead(PREF_KEY,{ball:'blue',sound:true,guide:true});if(!['blue','red','green'].includes(preferences.ball))preferences.ball='blue';
+let preferences=safeRead(PREF_KEY,{ball:'white',sound:true,guide:true});if(preferences.ball==='blue')preferences.ball='white';if(!['white','red','green'].includes(preferences.ball))preferences.ball='white';
 let bests=safeRead(BEST_KEY,Array(9).fill(null));if(!Array.isArray(bests)||bests.length!==9)bests=Array(9).fill(null);
 bests=bests.map(v=>Number.isInteger(v)&&v>=1&&v<=STROKE_LIMIT?v:null);
 let saved=safeRead(SAVE_KEY,null);if(saved&&(!Array.isArray(saved.scores)||saved.scores.length!==9||!Number.isInteger(saved.hole)||saved.hole<0||saved.hole>8))saved=null;
@@ -48,7 +48,7 @@ function buildCourse(index){
  const rows=L.rows,W=rows[0].length,H=rows.length,filled=[];for(let r=0;r<H;r++)for(let c=0;c<W;c++)if(rows[r][c]!=='.')filled.push([c,r]);
  let minC=Math.min(...filled.map(p=>p[0])),maxC=Math.max(...filled.map(p=>p[0])),minR=Math.min(...filled.map(p=>p[1])),maxR=Math.max(...filled.map(p=>p[1]));
  const boardW=(maxC-minC+1)*TILE+5.7,boardD=(maxR-minR+1)*TILE+5.7,cx=(minC+maxC-W+1)*TILE/2,cz=(minR+maxR-H+1)*TILE/2;
- levelBounds={w:boardW,d:boardD,cx,cz};R.camera.width=boardW+.4;R.camera.depth=boardD+.4;R.camera.center=[cx,.65,cz];R.camera.zoom=1;R.camera.yaw=.59;R.camera.tilt=.94;cameraYawTarget=.59;
+ levelBounds={w:boardW,d:boardD,cx,cz};R.camera.width=boardW+.4;R.camera.depth=boardD+.4;R.camera.center=[cx,.65,cz];const mobilePortrait=innerWidth<=700&&innerHeight>=580;R.camera.zoom=mobilePortrait ? .80 : 1;R.camera.yaw=.59;R.camera.tilt=.94;cameraYawTarget=.59;
  // The low island, all foliage and furniture are decorative and outside the ball physics.
  // The background floor receives shadows, but never casts its own shadow.
  g.add(Primitive.roundRect(boardW,boardD,1.23,2.35,color('#b7cea1'),color('#dbc2a0')),M.translation(cx,-.21,cz));
@@ -119,13 +119,13 @@ function physicsStep(b,dt,time,preview=false){
  if(hit&&!preview&&elapsed-lastBounce>.065){tone(175+Math.random()*60,.064,'triangle',Math.min(.055,Math.hypot(b.vx,b.vz)*.006));lastBounce=elapsed;}
  s=sampleSurface(b.x,b.z);if(!s){b.fell=true;return;}b.y=s.h+BALL_R;
  let dd=Math.hypot(b.x-cup.x,b.z-cup.z),v=Math.hypot(b.vx,b.vz);
- if(dd<.253&&v<3.35&&Math.abs(s.h-SURFACE)<.08){b.sunk=true;return;}
- if(dd<.39&&v<1.1){let strength=1.5*(1-dd/.43);b.vx+=(cup.x-b.x)/(dd||1)*strength*dt;b.vz+=(cup.z-b.z)/(dd||1)*strength*dt;}
+ if(dd<.285&&v<3.8&&Math.abs(s.h-SURFACE)<.08){b.sunk=true;return;}
+ if(dd<.52&&v<1.65){let strength=2.25*(1-dd/.56);b.vx+=(cup.x-b.x)/(dd||1)*strength*dt;b.vz+=(cup.z-b.z)/(dd||1)*strength*dt;}
  if(v>.003){b.rx+=(b.vz*dt)/BALL_R;b.rz-=(b.vx*dt)/BALL_R;}
  if(!Number.isFinite(b.x+b.z+b.vx+b.vz)){b.x=tee.x;b.z=tee.z;b.vx=b.vz=0;b.fell=true;}
 }
 function canShoot(){return state.screen==='play'&&state.phase==='ready'&&!modalKind&&!pausedByTab;}
-function setPower(p){aim.power=Math.max(.04,Math.min(1,p));let value=Math.round(aim.power*100);$('power').value=value;$('powerValue').textContent=value;$('power').style.setProperty('--power',value+'%');guideDirty=true;}
+function setPower(p){aim.power=Math.max(.02,Math.min(1,p));let value=Math.round(aim.power*100);$('power').value=value;$('powerValue').textContent=value;$('power').style.setProperty('--power',value+'%');guideDirty=true;}
 function strike(){if(!canShoot())return;initAudio();lastShot={x:ball.x,z:ball.z};ball.vx=aim.x*MAX_SPEED*aim.power;ball.vz=aim.z*MAX_SPEED*aim.power;ball.sunk=false;ball.fell=false;state.strokes++;state.phase='rolling';state.rollingTime=0;state.timeAtShot=state.time;tone(440,.09,'triangle',.09);if(navigator.vibrate&&preferences.sound)navigator.vibrate(8);guideDirty=true;updateHUD();}
 function settleBall(){ball.vx=ball.vz=0;state.phase='ready';ball.fell=false;guideDirty=true;updateHUD();saveProgress();if(state.strokes>=STROKE_LIMIT)completeHole(true);}
 function updatePhysics(dt){
@@ -197,7 +197,7 @@ function renderFrame(dt){
  for(const w of windmills)items.push({mesh:w.mesh,matrix:M.multiply(w.matrix,M.rotationZ(-(state.time*.72+w.phase)))});
  for(const gate of movingGates){let open=gateOpen(state.time);items.push({mesh:open?persistent.gateOpen:persistent.gateClosed,matrix:M.translation(gate.x,SURFACE+.12+(open?.76:0),gate.z)});}
  if(spinner)items.push({mesh:persistent.spinner,matrix:M.compose(spinner.x,SURFACE+.15,spinner.z,1,-state.time*.78)});
- if(state.phase!=='result'&&ball.y>-.24){let scale=BALL_R/.03497;items.push({mesh:modelMeshes['ball-'+preferences.ball][0],matrix:M.compose(ball.x,ball.y,ball.z,scale,0,ball.rz,ball.rx)});}
+ if(state.phase!=='result'&&ball.y>-.24){let scale=BALL_R/.03497,ballMesh=preferences.ball==='white'?persistent.ballWhite:modelMeshes['ball-'+preferences.ball][0];items.push({mesh:ballMesh,matrix:M.compose(ball.x,ball.y,ball.z,scale,0,ball.rz,ball.rx)});}
  if(state.phase==='ready'&&!home){let s=sampleSurface(ball.x,ball.z)?.h??SURFACE;items.push({mesh:persistent.ballRing,matrix:M.translation(ball.x,s+.027,ball.z),cast:false,unlit:true});}
  if(canShoot()){
   if(guideDirty||((movingGates.length||spinner)&&state.time-lastGuideTime>.24))updateGuide();if(guideMesh)items.push({mesh:guideMesh,cast:false,unlit:true});
@@ -211,7 +211,7 @@ function connectEvents(){
  $('start').onclick=()=>startRound(true);$('selectHome').onclick=showCourses;$('help').onclick=showHelp;$('pause').onclick=()=>state.phase==='result'?showResult():showPause();$('brand').onclick=()=>state.screen==='play'?showPause():null;
  $('strike').onclick=strike;$('power').addEventListener('input',()=>{if(canShoot())setPower(Number($('power').value)/100);});$('scorecard').onclick=showScorecard;$('resetBall').onclick=restartTee;
  $('guide').onclick=()=>{preferences.guide=!preferences.guide;safeWrite(PREF_KEY,preferences);guideDirty=true;updateHUD();};
- $('rotate').onclick=()=>{cameraYawTarget+=Math.PI/2;guideDirty=true;};$('zoom').onclick=()=>{R.camera.zoom=R.camera.zoom>.84?.77:1;};
+ $('rotate').onclick=()=>{cameraYawTarget+=Math.PI/2;guideDirty=true;};$('zoom').onclick=()=>{const mobilePortrait=innerWidth<=700&&innerHeight>=580,base=mobilePortrait ? .80 : 1,wide=mobilePortrait ? .66 : .77;R.camera.zoom=R.camera.zoom>(base+wide)/2?wide:base;};
  $('sound').onclick=()=>{preferences.sound=!preferences.sound;safeWrite(PREF_KEY,preferences);refreshPreferences();if(preferences.sound)tone(620,.08,'sine',.03);};
  document.querySelectorAll('[data-ball]').forEach(el=>el.onclick=()=>{preferences.ball=el.dataset.ball;safeWrite(PREF_KEY,preferences);refreshPreferences();tone(480,.055,'sine',.035);});
  $('modal').addEventListener('click',e=>{let button=e.target.closest('button');if(!button)return;if(button.dataset.course!==undefined){startPractice(Number(button.dataset.course));return;}let a=button.dataset.action;
@@ -257,7 +257,7 @@ function initialize(){try{
  let rotor=new GeometryBuilder();rotor.add(Primitive.box(2.12,.18,.15,color('#d9956e')));rotor.add(Primitive.cylinder(.15,.15,.12,color('#eee1b6'),14),M.translation(0,.075,0));persistent.spinner=R.mesh(rotor.data());
  persistent.confetti=['#edc87e','#9cbc84','#e6a789'].map(c=>R.mesh(Primitive.box(.065,.045,.11,color(c))));
  buildCourse(4);setScreen('home');cameraYawTarget=.59;refreshPreferences();updateStartLabel();connectEvents();$('loading').hidden=true;requestAnimationFrame(loop);
- window.PocketPutt={version:'1.0.1',getState:()=>({screen:state.screen,phase:state.phase,hole:state.hole,strokes:state.strokes,scores:[...state.scores],ball:{x:ball.x,y:ball.y,z:ball.z},assetCount:Object.keys(models).length}),levels:LEVELS.map(l=>({name:l.name,par:l.par}))};
+ window.PocketPutt={version:'1.1.0',getState:()=>({screen:state.screen,phase:state.phase,hole:state.hole,strokes:state.strokes,scores:[...state.scores],ball:{x:ball.x,y:ball.y,z:ball.z},assetCount:Object.keys(models).length}),levels:LEVELS.map(l=>({name:l.name,par:l.par}))};
  // Explicitly opt-in test harness. Not exposed in normal play.
  if(location.hash==='#test')window.__golfTest={
   snapshot:()=>({state:JSON.parse(JSON.stringify(state)),ball:{...ball},tee:{...tee},cup:{...cup},aim:{...aim},colliders:staticColliders.length,glError:R.gl.getError(),frameCount,bufferCount:R.meshes.size}),
