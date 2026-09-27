@@ -1,0 +1,16 @@
+{
+  "passed": [
+    "Desktop range input + strike button: one-stroke capture and result dialog",
+    "Storage serialization/restoration: resumes hole 2, retains hole 1 score",
+    "Actual mouse drag/release: direction and power produce a hole-in-one",
+    "Water: one stroke + one penalty; ball restored to last-shot position",
+    "Maximum-power rail collision: stays on course and comes to rest",
+    "Keyboard fine aim and guide toggle",
+    "Help modal and Escape",
+    "390x844 touch drag/release: correct direction and 70% power, hole-in-one",
+    "Two-finger pinch zoom: no accidental stroke",
+    "320x640: no horizontal/vertical overflow; strike control visible",
+    "844x390: no horizontal/vertical overflow; strike control visible"
+  ],
+  "errors": []
+}
