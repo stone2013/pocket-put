@@ -1,6 +1,14 @@
-# 袖珍果岭 · Pocket Putt 1.0
+# 袖珍果岭 · Pocket Putt 1.0.1
 
 一颗小球，九座小花园。使用提供的 Kenney Minigolf Kit 制作的离线 3D 迷你高尔夫小游戏。
+
+## 1.0.1 阴影稳定性修复
+
+修复调整瞄准方向时阴影整帧消失，以及转动视角时草坪出现跳动暗点的问题。正常的动态阴影继续保留，没有关闭投影。九洞关卡、滚动物理、输入方式、素材和存档键未改变。
+
+将新版 `index.html` 替换旧版即可更新网站。在本地运行时，保留原来的文件位置与名称更有利于沿用浏览器存储；跨路径的本地文件存档是否共享由浏览器决定，本版不做跨来源迁移。
+
+技术记录见 `CHANGELOG.md` 和 `QA_REPORT.md`。`QA_REPORT_v1.0.md` 及未带版本号的旧测试 JSON 是原版历史记录，不代表本次新增测试。
 
 ## 开始游戏
 
@@ -81,3 +89,13 @@ python build.py
 素材源自本次提供的 Kenney Minigolf Kit。原素材许可完整保留于 `LICENSE_KENNEY.txt`。程序、关卡组织、界面及合成音效为本次制作内容。
 
 游戏内保留了 Kenney 素材署名。源代码不包含任何字体文件。
+
+## 可选的回归测试
+
+游戏运行本身仍不需要 Python、Playwright 或外部依赖。仅运行自动测试时需要安装 Python Playwright 和可用的 Chromium。
+
+```sh
+python tests/run_shadow_regression.py
+```
+
+可以通过环境变量 `CHROMIUM_EXECUTABLE` 指定浏览器路径。无显示服务器的 Linux 软件渲染环境可能需要使用 `xvfb-run -a python tests/run_shadow_regression.py`。测试从内存加载离线 HTML，停止自动游戏帧循环并显式绘制测试帧，不绕过浏览器的导航策略。它覆盖控件事件与固定步长物理，不是硬件帧率测试。
