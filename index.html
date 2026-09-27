@@ -411,11 +411,12 @@ function refreshPreferences(){document.querySelectorAll('[data-ball]').forEach(e
 function initialize(){try{
  R=new MiniRenderer($('world'));decodeAssets();
  persistent.ground=R.mesh(Primitive.box(190,.1,190,color('#f3f1e7')));
+ persistent.ballWhite=R.mesh(Primitive.sphere(.03497,color('#ffffff'),12,7));
  persistent.dotData=Primitive.cylinder(.034,.034,.013,color('#f6f3dc'),8);persistent.ballRing=R.mesh(Primitive.ring(.31,.283,color('#f3f4d9'),40));persistent.gateClosed=R.mesh(Primitive.box(1.28,.22,.12,color('#e29a70')));persistent.gateOpen=R.mesh(Primitive.box(1.28,.22,.12,color('#9fc385')));
  let rotor=new GeometryBuilder();rotor.add(Primitive.box(2.12,.18,.15,color('#d9956e')));rotor.add(Primitive.cylinder(.15,.15,.12,color('#eee1b6'),14),M.translation(0,.075,0));persistent.spinner=R.mesh(rotor.data());
  persistent.confetti=['#edc87e','#9cbc84','#e6a789'].map(c=>R.mesh(Primitive.box(.065,.045,.11,color(c))));
  buildCourse(4);setScreen('home');cameraYawTarget=.59;refreshPreferences();updateStartLabel();connectEvents();$('loading').hidden=true;requestAnimationFrame(loop);
- window.PocketPutt={version:'1.1.1',getState:()=>({screen:state.screen,phase:state.phase,hole:state.hole,strokes:state.strokes,scores:[...state.scores],ball:{x:ball.x,y:ball.y,z:ball.z},assetCount:Object.keys(models).length}),levels:LEVELS.map(l=>({name:l.name,par:l.par}))};
+ window.PocketPutt={version:'1.1.2',getState:()=>({screen:state.screen,phase:state.phase,hole:state.hole,strokes:state.strokes,scores:[...state.scores],ball:{x:ball.x,y:ball.y,z:ball.z},assetCount:Object.keys(models).length}),levels:LEVELS.map(l=>({name:l.name,par:l.par}))};
  // Explicitly opt-in test harness. Not exposed in normal play.
  if(location.hash==='#test')window.__golfTest={
   snapshot:()=>({state:JSON.parse(JSON.stringify(state)),ball:{...ball},tee:{...tee},cup:{...cup},aim:{...aim},colliders:staticColliders.length,glError:R.gl.getError(),frameCount,bufferCount:R.meshes.size}),
