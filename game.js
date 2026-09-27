@@ -48,7 +48,7 @@ function buildCourse(index){
  const rows=L.rows,W=rows[0].length,H=rows.length,filled=[];for(let r=0;r<H;r++)for(let c=0;c<W;c++)if(rows[r][c]!=='.')filled.push([c,r]);
  let minC=Math.min(...filled.map(p=>p[0])),maxC=Math.max(...filled.map(p=>p[0])),minR=Math.min(...filled.map(p=>p[1])),maxR=Math.max(...filled.map(p=>p[1]));
  const boardW=(maxC-minC+1)*TILE+5.7,boardD=(maxR-minR+1)*TILE+5.7,cx=(minC+maxC-W+1)*TILE/2,cz=(minR+maxR-H+1)*TILE/2;
- levelBounds={w:boardW,d:boardD,cx,cz};R.camera.width=boardW+.4;R.camera.depth=boardD+.4;R.camera.center=[cx,.65,cz];const mobilePortrait=innerWidth<=700&&innerHeight>=580;R.camera.zoom=mobilePortrait ? .80 : 1;R.camera.yaw=.59;R.camera.tilt=.94;cameraYawTarget=.59;
+ levelBounds={w:boardW,d:boardD,cx,cz};R.camera.width=boardW+.4;R.camera.depth=boardD+.4;R.camera.center=[cx,.65,cz];const mobilePortrait=R.w<=700&&R.h>=580;R.camera.zoom=mobilePortrait ? .90 : 1;R.camera.yaw=.59;R.camera.tilt=.94;cameraYawTarget=.59;
  // The low island, all foliage and furniture are decorative and outside the ball physics.
  // The background floor receives shadows, but never casts its own shadow.
  g.add(Primitive.roundRect(boardW,boardD,1.23,2.35,color('#b7cea1'),color('#dbc2a0')),M.translation(cx,-.21,cz));
@@ -185,7 +185,7 @@ function updateGuide(){R.dispose(guideMesh);guideMesh=null;if(!canShoot())return
  const dir=[aim.x,aim.z],side=[-aim.z,aim.x],p=(along,width)=>{let x=ball.x+dir[0]*along+side[0]*width,z=ball.z+dir[1]*along+side[1]*width;return[x,(sampleSurface(x,z)?.h??surf)+.064,z];};let len=.75+aim.power*1.05;g.quad(p(.31,-.035),p(len-.2,-.035),p(len-.2,.035),p(.31,.035),color('#f8f6df'),[0,1,0]);g.triangle(p(len,0),p(len-.26,-.13),p(len-.26,.13),color('#f8f6df'),[0,1,0]);guideMesh=R.mesh(g.data());guideDirty=false;lastGuideTime=state.time;
 }
 let cameraYawTarget=.59;
-function sceneRect(){let w=innerWidth,h=innerHeight,mobile=w<=700,landscape=h<580&&w>h;
+function sceneRect(){let w=R?.w||innerWidth,h=R?.h||innerHeight,mobile=w<=700,landscape=h<580&&w>h;
  if(state.screen==='home'){if(mobile&&!landscape)return[w*.015,h*.35,w*.97,h*.405];return[w*.415,h*.135,w*.56,h*.73];}
  if(mobile&&!landscape)return[13,168,w-26,Math.max(160,h-375)];
  if(landscape)return[172,70,w-192,Math.max(180,h-173)];
@@ -211,7 +211,7 @@ function connectEvents(){
  $('start').onclick=()=>startRound(true);$('selectHome').onclick=showCourses;$('help').onclick=showHelp;$('pause').onclick=()=>state.phase==='result'?showResult():showPause();$('brand').onclick=()=>state.screen==='play'?showPause():null;
  $('strike').onclick=strike;$('power').addEventListener('input',()=>{if(canShoot())setPower(Number($('power').value)/100);});$('scorecard').onclick=showScorecard;$('resetBall').onclick=restartTee;
  $('guide').onclick=()=>{preferences.guide=!preferences.guide;safeWrite(PREF_KEY,preferences);guideDirty=true;updateHUD();};
- $('rotate').onclick=()=>{cameraYawTarget+=Math.PI/2;guideDirty=true;};$('zoom').onclick=()=>{const mobilePortrait=innerWidth<=700&&innerHeight>=580,base=mobilePortrait ? .80 : 1,wide=mobilePortrait ? .66 : .77;R.camera.zoom=R.camera.zoom>(base+wide)/2?wide:base;};
+ $('rotate').onclick=()=>{cameraYawTarget+=Math.PI/2;guideDirty=true;};$('zoom').onclick=()=>{const mobilePortrait=R.w<=700&&R.h>=580,base=mobilePortrait ? .90 : 1,wide=mobilePortrait ? .78 : .77;R.camera.zoom=R.camera.zoom>(base+wide)/2?wide:base;};
  $('sound').onclick=()=>{preferences.sound=!preferences.sound;safeWrite(PREF_KEY,preferences);refreshPreferences();if(preferences.sound)tone(620,.08,'sine',.03);};
  document.querySelectorAll('[data-ball]').forEach(el=>el.onclick=()=>{preferences.ball=el.dataset.ball;safeWrite(PREF_KEY,preferences);refreshPreferences();tone(480,.055,'sine',.035);});
  $('modal').addEventListener('click',e=>{let button=e.target.closest('button');if(!button)return;if(button.dataset.course!==undefined){startPractice(Number(button.dataset.course));return;}let a=button.dataset.action;
@@ -244,7 +244,10 @@ function connectEvents(){
  const endPointer=(e,cancel=false)=>{pointers.delete(e.pointerId);try{canvas.releasePointerCapture(e.pointerId);}catch{}if(!drag)return;if(drag.kind==='pinch'){if(!pointers.size){drag=null;pinch=null;}return;}let d=drag;drag=null;if(cancel){if(d.original){aim={...d.original};setPower(aim.power);}return;}if(d.kind==='aim'&&canShoot()){if(d.moved&&Math.hypot(e.clientX-d.x,e.clientY-d.y)>=10){strike();}else if(!d.moved){let p=R.ground(e.clientX,e.clientY),dx=p[0]-ball.x,dz=p[2]-ball.z,l=Math.hypot(dx,dz);if(l>.32){aim.x=dx/l;aim.z=dz/l;guideDirty=true;}}}};
  canvas.addEventListener('pointerup',e=>endPointer(e));canvas.addEventListener('pointercancel',e=>endPointer(e,true));canvas.addEventListener('lostpointercapture',e=>{if(drag?.id===e.pointerId){cancelDrag();}});
  canvas.addEventListener('wheel',e=>{if(modalKind)return;e.preventDefault();R.camera.zoom=Math.max(.65,Math.min(1.4,R.camera.zoom+Math.sign(e.deltaY)*.06));},{passive:false});
- addEventListener('resize',()=>{R.resize();cancelDrag();});
+ const syncViewport=()=>{if(!R)return;R.resize();cancelDrag();guideDirty=true;};
+ addEventListener('resize',syncViewport);addEventListener('orientationchange',()=>setTimeout(syncViewport,80));addEventListener('pageshow',()=>{syncViewport();setTimeout(syncViewport,120);});
+ if(window.visualViewport){visualViewport.addEventListener('resize',syncViewport);visualViewport.addEventListener('scroll',syncViewport);}
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncViewport();setTimeout(syncViewport,80);}});
  document.addEventListener('visibilitychange',()=>{pausedByTab=document.hidden;if(document.hidden){cancelDrag();if(state.phase==='ready')saveProgress();}loop.last=undefined;});
  addEventListener('beforeunload',()=>{if(state.screen==='play'&&state.phase==='ready')saveProgress();});
  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();pausedByTab=true;$('loading').hidden=false;$('loading').innerHTML='<div class="fatal"><h2>图形环境暂时中断了。</h2><p>停球时的巡回赛进度已经保存在本浏览器。重新打开即可继续。</p><button class="primary" onclick="location.reload()">重新打开 ↗</button></div>';});
@@ -257,7 +260,7 @@ function initialize(){try{
  let rotor=new GeometryBuilder();rotor.add(Primitive.box(2.12,.18,.15,color('#d9956e')));rotor.add(Primitive.cylinder(.15,.15,.12,color('#eee1b6'),14),M.translation(0,.075,0));persistent.spinner=R.mesh(rotor.data());
  persistent.confetti=['#edc87e','#9cbc84','#e6a789'].map(c=>R.mesh(Primitive.box(.065,.045,.11,color(c))));
  buildCourse(4);setScreen('home');cameraYawTarget=.59;refreshPreferences();updateStartLabel();connectEvents();$('loading').hidden=true;requestAnimationFrame(loop);
- window.PocketPutt={version:'1.1.0',getState:()=>({screen:state.screen,phase:state.phase,hole:state.hole,strokes:state.strokes,scores:[...state.scores],ball:{x:ball.x,y:ball.y,z:ball.z},assetCount:Object.keys(models).length}),levels:LEVELS.map(l=>({name:l.name,par:l.par}))};
+ window.PocketPutt={version:'1.1.1',getState:()=>({screen:state.screen,phase:state.phase,hole:state.hole,strokes:state.strokes,scores:[...state.scores],ball:{x:ball.x,y:ball.y,z:ball.z},assetCount:Object.keys(models).length}),levels:LEVELS.map(l=>({name:l.name,par:l.par}))};
  // Explicitly opt-in test harness. Not exposed in normal play.
  if(location.hash==='#test')window.__golfTest={
   snapshot:()=>({state:JSON.parse(JSON.stringify(state)),ball:{...ball},tee:{...tee},cup:{...cup},aim:{...aim},colliders:staticColliders.length,glError:R.gl.getError(),frameCount,bufferCount:R.meshes.size}),

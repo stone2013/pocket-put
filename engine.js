@@ -93,7 +93,13 @@ class MiniRenderer{
  locations(p,attrs,uniforms){let out={};for(let n of attrs)out[n]=this.gl.getAttribLocation(p,n);for(let n of uniforms)out[n]=this.gl.getUniformLocation(p,n);return out;}
  mesh(data){let gl=this.gl,b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);let m={buffer:b,count:data.length/9};this.meshes.add(m);return m;}
  dispose(m){if(m&&this.meshes.has(m)){this.gl.deleteBuffer(m.buffer);this.meshes.delete(m);}}
- resize(){this.w=innerWidth;this.h=innerHeight;this.canvas.width=Math.round(this.w*this.pixelRatio);this.canvas.height=Math.round(this.h*this.pixelRatio);this.canvas.style.width=this.w+'px';this.canvas.style.height=this.h+'px';}
+ resize(){
+  // iOS standalone PWAs can report a transient/old innerHeight while the status
+  // bar and safe areas settle. Prefer the visual viewport, then fall back to
+  // the document viewport, and never allow a zero-sized WebGL backbuffer.
+  const vv=window.visualViewport,w=Math.max(1,Math.round(vv?.width||document.documentElement.clientWidth||innerWidth||1)),h=Math.max(1,Math.round(vv?.height||document.documentElement.clientHeight||innerHeight||1));
+  this.w=w;this.h=h;this.pixelRatio=Math.min(devicePixelRatio||1,1.7);this.canvas.width=Math.max(1,Math.round(w*this.pixelRatio));this.canvas.height=Math.max(1,Math.round(h*this.pixelRatio));this.canvas.style.width=w+'px';this.canvas.style.height=h+'px';
+ }
  setupCamera(rect){
   const c=this.camera,dir=[Math.sin(c.yaw)*Math.cos(c.tilt),Math.sin(c.tilt),Math.cos(c.yaw)*Math.cos(c.tilt)];this.right=V.norm(V.cross([0,1,0],dir));this.up=V.cross(dir,this.right);this.forward=V.mul(dir,-1);
   const pts=[];for(let x of [-c.width/2,c.width/2])for(let z of [-c.depth/2,c.depth/2])for(let y of [-1,3.5])pts.push([x,y,z]);const xs=pts.map(p=>V.dot(p,this.right)),ys=pts.map(p=>V.dot(p,this.up));const units=Math.max((Math.max(...xs)-Math.min(...xs))/rect[2],(Math.max(...ys)-Math.min(...ys))/rect[3])*c.zoom;
